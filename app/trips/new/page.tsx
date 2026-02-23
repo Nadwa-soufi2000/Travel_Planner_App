@@ -2,15 +2,26 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { createTrip } from "@/lib/actions/create-trip"
 import { cn } from "@/lib/utils"
+import { UploadButton } from "@/lib/upload-thing"
+import { useState, useTransition } from 'react'
+import Image from "next/image"
 
 export default function NewTrip() {
+  const[isPending , startTransition] = useTransition()
+  const[imageUrl , setImageUrl] = useState<string | null>(null)
+
   return (
     <div className="max-w-lg mx-auto mt-10">
       <Card>
         <CardHeader>New Trip</CardHeader>
         <CardContent>
-            <form className="space-y-6">
+            <form className="space-y-6" action={(formData : FormData) => {
+                startTransition(() => {
+                   createTrip(formData)
+                })
+            } }>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Title
@@ -71,7 +82,30 @@ export default function NewTrip() {
                    />
                  </div>
               </div>
-              <Button type="submit" className="w-full"></Button>
+              <div>
+                 <label>Trip Image</label>
+                 {imageUrl && (
+                  <Image 
+                    src={imageUrl} 
+                    alt="Trip Preview" 
+                    className="w-full mb-4 rounded-md max-h-48 object-cover" 
+                  />
+                 )}
+                 <UploadButton 
+                   endpoint="imageUploader"
+                   onClientUploadComplete={(res) => {
+                     if(res && res[0].ufsUrl) {
+                        setImageUrl(res[0].ufsUrl)
+                     }
+                   }}
+                   onUploadError={(error: Error) => {
+                     console.log("error" , error)
+                   }}
+                 />
+              </div>
+              <Button type="submit" disabled={isPending} className="w-full">
+                 {isPending ? "Creating..." : "Create Trip"}
+              </Button>
             </form>
         </CardContent>
       </Card>

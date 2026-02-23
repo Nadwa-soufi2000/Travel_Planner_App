@@ -1,9 +1,14 @@
+"use server"
+
+
 import { auth } from "@/auth"
+import { prisma } from "../prisma"
+import { redirect } from "next/navigation"
 
 export async function createTrip(formData : FormData) {
 
    const session = await auth()
-   if(!session)
+   if(!session || !session.user.id)
    {
      throw new Error("Not authenticated.")
    }
@@ -21,4 +26,16 @@ export async function createTrip(formData : FormData) {
 
    const startDate = new Date(startDateStr)
    const endDate = new Date(endDateStr)
+
+   await prisma.trip.create({
+     data : {
+         title,
+         description,
+         startDate,
+         endDate,
+         userId : session.user.id,
+     }
+   }) 
+
+   redirect("/trips")
 }
